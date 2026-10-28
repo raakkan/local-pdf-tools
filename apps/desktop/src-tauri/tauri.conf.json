@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Local PDF Tools",
+  "version": "0.6.0",
+  "identifier": "com.localpdftools.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @localpdf/web dev",
+    "beforeBuildCommand": "pnpm --workspace-root notices && pnpm --workspace-root notices:native && pnpm --filter @localpdf/web build",
+    "devUrl": "http://127.0.0.1:5173",
+    "frontendDist": "../../web/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Local PDF Tools",
+        "width": 1200,
+        "height": 850,
+        "minWidth": 360,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' customprotocol: asset:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: http://asset.localhost blob: data:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "shortDescription": "Your PDFs stay on your device.",
+    "category": "Productivity",
+    "copyright": "Copyright Local PDF Tools contributors",
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "type": "offlineInstaller"
+      }
+    },
+    "resources": {
+      "../../../THIRD_PARTY_NOTICES.txt": "licenses/THIRD_PARTY_NOTICES.txt",
+      "../../../NATIVE_THIRD_PARTY_NOTICES.txt": "licenses/NATIVE_THIRD_PARTY_NOTICES.txt",
+      "../../../LICENSE": "licenses/LICENSE.txt"
+    }
+  }
+}

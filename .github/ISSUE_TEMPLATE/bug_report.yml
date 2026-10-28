@@ -1,0 +1,16 @@
+name: Bug report
+description: Report a reproducible problem using a synthetic document.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the tool, steps, expected behavior, and actual behavior. Do not include private files or filenames.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: App version, OS, and browser or webview
+    validations:
+      required: true

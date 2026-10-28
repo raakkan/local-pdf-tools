@@ -1,0 +1,30 @@
+{
+  "name": "local-pdf-tools",
+  "private": true,
+  "version": "0.6.0",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev": "pnpm --filter @localpdf/web dev",
+    "build": "pnpm notices && pnpm --filter @localpdf/web build",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "preview": "pnpm --filter @localpdf/web preview",
+    "desktop:dev": "pnpm --filter @localpdf/desktop dev",
+    "desktop:build": "pnpm --filter @localpdf/desktop build",
+    "notices": "node scripts/notices.mjs",
+    "notices:native": "node scripts/rust-notices.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "~5.9.3",
+    "vite": "^6.4.1",
+    "vitest": "^3.2.4",
+    "sharp": "^0.34.0"
+  }
+}

@@ -1,0 +1,10 @@
+name: Feature request
+description: Suggest an improvement to local PDF workflows.
+body:
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What task should become easier?
+      description: Describe the workflow and why it matters, without private document content.
+    validations:
+      required: true

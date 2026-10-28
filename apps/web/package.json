@@ -1,0 +1,20 @@
+{
+  "name": "@localpdf/web",
+  "version": "0.6.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build && node ../../scripts/routes.mjs && node ../../scripts/offline.mjs",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@localpdf/ui": "workspace:*",
+    "@localpdf/core": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-fs": "^2.4.0"
+  }
+}

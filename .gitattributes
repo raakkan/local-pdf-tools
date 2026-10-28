@@ -1,0 +1,14 @@
+# Keep PDF fixtures and image/font assets byte-for-byte intact.
+*.pdf binary
+*.png binary
+*.ico binary
+*.icns binary
+*.woff2 binary
+*.ttf binary
+*.wasm binary
+
+# Preserve upstream license texts, including their original whitespace.
+THIRD_PARTY_NOTICES.txt -whitespace
+NATIVE_THIRD_PARTY_NOTICES.txt -whitespace
+apps/web/public/third-party-notices.txt -whitespace
+third-party/** -whitespace

@@ -1,0 +1,23 @@
+import {it,expect} from 'vitest';
+import {PDFDocument,PDFName,PDFDict} from '../packages/pdf-core/src/testing';
+import {validatePassword,validatePasswordDocument} from '../packages/pdf-core/src/password';
+import {compatibilityFixture} from './fixtures/compatibility';
+import {passwordRuntime} from './helpers/password-runtime';
+it.each(['short','', 'abc\n12345678','abc\0defgh', 'é'.repeat(64)])('rejects invalid protection password %j',password=>{expect(()=>validatePassword('protect-pdf',password)).toThrow();});
+it.each(['--long password','Long pass é #123','a'.repeat(127)])('accepts exact supported password bytes %j',password=>{expect(validatePassword('protect-pdf',password)).toBe(password);});
+it('allows a blank current password for permission-only files',()=>{expect(validatePassword('unlock-pdf','')).toBe('');});
+it('rejects overly long current passwords',()=>{expect(()=>validatePassword('unlock-pdf','a'.repeat(1025))).toThrow('too long');});
+it('AES-256 protection and unlocking retain forms, bookmarks, links, attachments and original bytes',async()=>{
+ const fixture=await compatibilityFixture(),snapshot=fixture.bytes.slice(),encrypted=await passwordRuntime('protect-pdf',fixture.bytes,'--Secret pass é 123');expect(encrypted.message).toBeUndefined();expect(encrypted.logs).toEqual([]);expect(fixture.bytes).toEqual(snapshot);
+ const raw=new TextDecoder('latin1').decode(encrypted.bytes);expect(raw).toMatch(/\/Encrypt/);expect(raw).toMatch(/\/R\s+6\b/);expect(raw).toMatch(/\/V\s+5\b/);expect(raw).toMatch(/\/Length\s+256\b/);
+ const wrong=await passwordRuntime('unlock-pdf',encrypted.bytes!,'incorrect');expect(wrong.bytes).toBeUndefined();expect(wrong.message).toBe('Incorrect password. Try again.');expect(wrong.logs).toEqual([]);
+ const unlocked=await passwordRuntime('unlock-pdf',encrypted.bytes!,'--Secret pass é 123');expect(unlocked.message).toBeUndefined();const d=await PDFDocument.load(unlocked.bytes!),source=await PDFDocument.load(fixture.bytes);expect(d.getPageCount()).toBe(source.getPageCount());expect(d.getPage(0).getSize()).toEqual(source.getPage(0).getSize());expect(d.getPage(0).node.Annots()?.size()).toBe(source.getPage(0).node.Annots()?.size());for(const name of ['AcroForm','Outlines','Names'])expect(d.catalog.lookup(PDFName.of(name))).toBeInstanceOf(PDFDict);expect(d.getForm().getTextField('customer').getText()).toBe(source.getForm().getTextField('customer').getText());expect(d.getForm().getCheckBox('approved').isChecked()).toBe(true);expect(unlocked.logs).toEqual([]);
+});
+it('unlocking a plain PDF succeeds without requiring a password',async()=>{const d=await PDFDocument.create();d.addPage();const result=await passwordRuntime('unlock-pdf',await d.save(),'');expect(result.message).toBeUndefined();expect((await PDFDocument.load(result.bytes!)).getPageCount()).toBe(1);});
+it.each(['protect-pdf','unlock-pdf'] as const)('%s refuses signed documents',async operation=>{const d=await PDFDocument.create();d.addPage();d.catalog.set(PDFName.of('Signature'),d.context.obj({Type:'Sig',ByteRange:[0,1,2,3]}));await expect(validatePasswordDocument(await d.save(),operation)).rejects.toThrow('digital signature');});
+it('malformed input gives a sanitized error without logging',async()=>{const r=await passwordRuntime('unlock-pdf',new TextEncoder().encode('not a PDF'),'sensitive secret');expect(r.bytes).toBeUndefined();expect(r.message).not.toContain('sensitive');expect(r.logs).toEqual([]);});
+
+import {readFile} from 'node:fs/promises';
+it.each(['aes256','aes128','rc4'])('decrypts independently generated %s PDFs with the user or owner password',async name=>{const bytes=new Uint8Array(await readFile(`tests/fixtures/password/${name}.pdf`));for(const password of ['fixture-pass-123','owner-pass-456']){const r=await passwordRuntime('unlock-pdf',bytes,password);expect(r.message).toBeUndefined();const d=await PDFDocument.load(r.bytes!);expect(d.getTitle()).toBe('Independent encrypted fixture');expect(d.getPageCount()).toBe(1);}});
+it('unlocks permission-only encryption with an empty opening password',async()=>{const bytes=new Uint8Array(await readFile('tests/fixtures/password/permissions.pdf'));const r=await passwordRuntime('unlock-pdf',bytes,'');expect(r.message).toBeUndefined();expect((await PDFDocument.load(r.bytes!)).getTitle()).toBe('Independent encrypted fixture');});
+it.each(['signed','xfa'])('does not release decrypted %s documents for rewriting',async name=>{const bytes=new Uint8Array(await readFile(`tests/fixtures/password/${name}.pdf`));const r=await passwordRuntime('unlock-pdf',bytes,'fixture-pass-123');expect(r.message).toBeUndefined();await expect(validatePasswordDocument(r.bytes!,'unlock-pdf')).rejects.toThrow(name==='signed'?'digital signature':'XFA');});

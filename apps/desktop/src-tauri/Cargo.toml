@@ -1,0 +1,13 @@
+[package]
+name = "local-pdf-tools"
+version = "0.6.0"
+description = "Private, offline PDF tools"
+authors = ["Local PDF Tools contributors"]
+license = "MIT"
+edition = "2021"
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"

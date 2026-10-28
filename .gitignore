@@ -1,0 +1,15 @@
+node_modules/
+dist/
+target/
+.DS_Store
+.env*
+!.env.example
+test-results/
+playwright-report/
+
+apps/web/public/pdf-assets/
+apps/desktop/src-tauri/gen/
+
+apps/web/public/ocr/
+
+apps/web/public/password-assets/
