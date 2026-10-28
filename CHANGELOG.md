@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0
+
+- Added batch mode to 15 tools, using shared settings and sequential per-document workers.
+- Added per-file progress, independent failure handling, cancellation with partial-result retention, and individual/ZIP export.
+- Added safe numbered source-name prefixes for outputs, including duplicate filenames. ZIP creation runs in a cancellable worker.
+- Reused one browser job adapter for individual and batch processing, with PDF load failure/cancellation cleanup.
+- Fixed the page-range input accessible name used by keyboard/screen-reader and UI test workflows.
+
+
 ## 0.6.0
 
 - Added Protect PDF with AES-256 revision 6 encryption and Unlock PDF using known opening or owner passwords.

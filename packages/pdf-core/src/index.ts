@@ -55,7 +55,7 @@ export function makeZip(files: OutputFile[]): OutputFile {
 export async function loadSafe(bytes: Uint8Array): Promise<PDFDocument> {
   let doc: PDFDocument;
   try { doc = await PDFDocument.load(bytes, { updateMetadata: false, throwOnInvalidObject: true }); }
-  catch { throw new Error('Unable to read this PDF. It may be damaged or password-protected. Encrypted PDFs are not supported yet.'); }
+  catch { throw new Error('Unable to read this PDF. It may be damaged or password-protected. Use Unlock PDF first for encrypted documents.'); }
   return doc;
 }
 export function assertRewritable(doc:PDFDocument,operation:Operation='merge'){assertOperationCompatible(doc,operation);}

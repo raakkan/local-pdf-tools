@@ -4,8 +4,11 @@ import type { PdfJob, OutputFile, Progress } from './index';
 import { parseRange } from './index';
 GlobalWorkerOptions.workerSrc = workerUrl;
 const assets = new URL('pdf-assets/', new URL(import.meta.env.BASE_URL, location.href)).href;
-export function openPdf(bytes: Uint8Array,password?:string) {
-  return getDocument({data:bytes.slice(),password,cMapUrl:`${assets}cmaps/`,cMapPacked:true,standardFontDataUrl:`${assets}standard_fonts/`,wasmUrl:`${assets}wasm/`,enableXfa:false,useWasm:true}).promise;
+export function openPdf(bytes:Uint8Array,password?:string,signal?:AbortSignal):Promise<PDFDocumentProxy>{
+ signal?.throwIfAborted();
+ const task=getDocument({data:bytes.slice(),password,cMapUrl:`${assets}cmaps/`,cMapPacked:true,standardFontDataUrl:`${assets}standard_fonts/`,wasmUrl:`${assets}wasm/`,enableXfa:false,useWasm:true});
+ const abort=()=>{void task.destroy().catch(()=>{});};signal?.addEventListener('abort',abort,{once:true});
+ return task.promise.then(async doc=>{signal?.removeEventListener('abort',abort);if(signal?.aborted){await doc.destroy();signal.throwIfAborted();}return doc;},async error=>{signal?.removeEventListener('abort',abort);await task.destroy().catch(()=>{});throw error;});
 }
 export async function renderPage(doc: PDFDocumentProxy, index: number, canvas: HTMLCanvasElement, scale: number, rotation?: number) {
   const page=await doc.getPage(index+1), viewport=page.getViewport({scale,rotation:rotation ?? page.rotate});
@@ -16,7 +19,7 @@ export async function renderPage(doc: PDFDocumentProxy, index: number, canvas: H
   page.cleanup();
 }
 export async function runBrowserJob(job: PdfJob, progress: Progress, signal: AbortSignal): Promise<OutputFile[]> {
-  const doc=await openPdf(job.inputs[0].bytes);
+  const doc=await openPdf(job.inputs[0].bytes,undefined,signal);
   const abort=()=>void doc.destroy(); signal.addEventListener('abort',abort,{once:true});
   try {
     if (signal.aborted) throw new Error('Cancelled.');

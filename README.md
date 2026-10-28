@@ -120,7 +120,7 @@ The implementation is independent; PDFCraft's feature catalog informed the roadm
 
 Inspect PDF now lists detected document features and the available/restricted edit operations. Empty unsigned signature fields can be retained, but actual signature dictionaries and certification permissions block rewriting. This does not add form filling, flattening, or certificate signing. New stamps are not tagged for accessibility, and preserving existing tags is not a conformance certification. Crop may hide existing form controls visually without removing them.
 
-See [compatibility verification](docs/COMPATIBILITY_STATUS.md). Compression is implemented in version 0.4.0. OCR is implemented in version 0.5.0. Password protection and unlocking are implemented in 0.6.0. Batch workflows remain planned.
+See [compatibility verification](docs/COMPATIBILITY_STATUS.md). Compression is implemented in version 0.4.0. OCR is implemented in version 0.5.0. Password protection and unlocking are implemented in 0.6.0. Batch processing is implemented in 0.7.0; reusable presets remain planned.
 
 ## Step 2: compression (0.4.0)
 
@@ -143,3 +143,7 @@ Protect PDF creates an AES-256 (revision 6) encrypted copy with an opening passw
 ### Desktop architecture
 
 Desktop downloads are Tauri 2 applications with a native Rust shell and a bundled React web interface. Windows uses WebView2, macOS uses WKWebView and Linux uses WebKitGTK. Native dialogs handle file selection and saving; PDF manipulation runs locally in JavaScript/WebAssembly workers. All application assets are packaged with the desktop app. The website uses the same shared application as a PWA. Native Android/iOS apps are not included.
+
+### Batch processing (0.7.0)
+
+Enable **Process multiple PDFs separately** in compress, split, image export, text extraction, page numbers, watermark, visual signature, inspection, resize, crop, headers/footers, pages-per-sheet, OCR, protect, or unlock. Shared settings apply independently to each PDF; page ranges must be valid per document. One failed document does not stop the others. Stopping retains completed results, cancels the active file, and skips waiting files. Save successful outputs individually or as a ZIP with numbered safe source-name prefixes. Archive creation uses a cancellable worker. Password tools use the same password for each file and clear fields after the batch. Source files and completed outputs remain in session memory: use smaller groups on devices with limited memory. Merge, alternate merge, images-to-PDF, organization and metadata retain their existing workflows. See [batch status](docs/BATCH_STATUS.md).

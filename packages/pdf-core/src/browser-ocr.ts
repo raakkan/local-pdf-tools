@@ -7,7 +7,7 @@ export async function runOcrJob(job:PdfJob,progress:Progress,signal:AbortSignal)
  if(!(language in ocrLanguages)||![150,200,300].includes(dpi)||!['pdf','text','both'].includes(output))throw new Error('Choose valid OCR settings.');
  if(job.inputs.length!==1)throw new Error('Choose one PDF.');
  signal.throwIfAborted();
- const doc=await openPdf(job.inputs[0].bytes);let tess:TessWorker|undefined,writer:Worker|undefined,canvas:HTMLCanvasElement|undefined;
+ const doc=await openPdf(job.inputs[0].bytes,undefined,signal);let tess:TessWorker|undefined,writer:Worker|undefined,canvas:HTMLCanvasElement|undefined;
  let closed=false;
  let fail:(e:unknown)=>void=()=>{};
  const failure=new Promise<never>((_,reject)=>{fail=reject;});

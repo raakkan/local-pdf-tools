@@ -19157,7 +19157,7 @@ ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation a
 
 ========================================================================
 
-local-pdf-tools@0.6.0
+local-pdf-tools@0.7.0
 Declared license: MIT
 No top-level license text found; review upstream before public release.
 

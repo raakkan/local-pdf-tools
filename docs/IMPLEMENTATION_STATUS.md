@@ -1,3 +1,5 @@
+Version 0.7.0 adds shared-settings batch processing. See [BATCH_STATUS.md](BATCH_STATUS.md).
+
 Version 0.6.0 adds password protection and unlocking. See [PASSWORD_STATUS.md](PASSWORD_STATUS.md).
 
 Version 0.5.0 adds local OCR. See [OCR_STATUS.md](OCR_STATUS.md).

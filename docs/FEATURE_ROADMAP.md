@@ -35,7 +35,7 @@ The existing metadata and advanced-document guards must be reviewed per operatio
 - Plain-text creation: generate paginated PDFs from user-supplied TXT files. Bundle a suitably licensed Unicode font and test text wrapping, glyph coverage, and missing-character errors before adding more formats.
 - Image input expansion: add formats only after confirming local decoder availability and preservation behavior across desktop webviews. Browser canvas conversion is suitable for some formats; HEIC and multipage TIFF need separate decoder evaluation.
 - Workflow presets: start with an ordered list of operations rather than a node canvas. Validate compatible input/output types. Suggested presets: arrange → number → watermark, or images → PDF → number. Persist settings only, never document bytes.
-- Batch execution: apply an operation to several documents sequentially, with per-file status, cancellation, and ZIP export. Explain partial successes and keep memory bounded.
+- Batch execution shipped in 0.7.0 across 15 shared-settings tools: sequential workers, per-file progress/failures, partial results after cancellation and ZIP export. Inputs and completed outputs remain in session memory. Future work: streamed file loading/export and failed-only retries.
 
 ## Batch 3 — new engines and higher validation effort
 
