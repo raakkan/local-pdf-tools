@@ -22,3 +22,12 @@ export async function encodeCompressionImage(image:CompressionImage,signal:Abort
   return {id:image.id,bytes:new Uint8Array(await blob.arrayBuffer()),width:canvas.width,height:canvas.height};
  }finally{if(source&&'close'in source)source.close();canvas.width=canvas.height=0;}
 }
+/** Convert WebP to a PNG for the PDF engine, keeping transparency and staying local. */
+export async function convertWebpToPng(file:import('./index').InputFile,signal:AbortSignal):Promise<import('./index').InputFile>{
+ signal.throwIfAborted();const canvas=document.createElement('canvas');let bitmap:ImageBitmap|undefined,url:string|undefined,img:HTMLImageElement|undefined;
+ try{const blob=new Blob([file.bytes.slice().buffer as ArrayBuffer],{type:'image/webp'});let source:ImageBitmap|HTMLImageElement;
+  if(typeof createImageBitmap==='function'){try{bitmap=await createImageBitmap(blob);source=bitmap;}catch{signal.throwIfAborted();throw new Error('This browser could not decode the WebP image.');}}
+  else{url=URL.createObjectURL(blob);img=new Image();const target=img;source=await new Promise<HTMLImageElement>((resolve,reject)=>{const cleanup=()=>{target.onload=null;target.onerror=null;signal.removeEventListener('abort',abort);};const abort=()=>{cleanup();target.src='';reject(new DOMException('Cancelled','AbortError'));};target.onload=()=>{cleanup();resolve(target);};target.onerror=()=>{cleanup();reject(new Error('This browser could not decode the WebP image.'));};signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();else target.src=url!;});}
+  signal.throwIfAborted();const width=source instanceof HTMLImageElement?source.naturalWidth:source.width,height=source instanceof HTMLImageElement?source.naturalHeight:source.height;if(!width||!height||width*height>16_000_000)throw new Error('WebP images must have no more than 16 million pixels.');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d');if(!context)throw new Error('Canvas is unavailable.');context.drawImage(source,0,0);const png=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value&&value.type==='image/png'?resolve(value):reject(new Error('Could not convert the WebP image.')),'image/png'));signal.throwIfAborted();const bytes=new Uint8Array(await png.arrayBuffer());signal.throwIfAborted();return {name:file.name.replace(/\.webp$/i,'.png'),type:'image/png',bytes};
+ }finally{bitmap?.close();if(url)URL.revokeObjectURL(url);canvas.width=canvas.height=0;}
+}

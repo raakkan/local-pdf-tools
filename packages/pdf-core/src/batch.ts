@@ -1,5 +1,5 @@
-import type {Operation,PdfJob,OutputFile,Progress} from './index';
-export const batchOperations:readonly Operation[]=['compress','split','pdf-to-images','extract-text','page-numbers','watermark','signature','inspect-pdf','resize-pdf','crop-pdf','header-footer','n-up','ocr','protect-pdf','unlock-pdf'];
+import type {Operation,PdfJob,OutputFile,Progress,JobOptions} from './index';
+export const batchOperations:readonly Operation[]=['compress','split','pdf-to-images','extract-text','page-numbers','watermark','signature','inspect-pdf','resize-pdf','crop-pdf','header-footer','n-up','booklet','ocr','protect-pdf','unlock-pdf'];
 export const supportsBatch=(operation:Operation|undefined)=>!!operation&&batchOperations.includes(operation);
 export type BatchStatus='pending'|'running'|'succeeded'|'failed'|'cancelled'|'skipped';
 export interface BatchItem {index:number;name:string;status:BatchStatus;progress:number;files:OutputFile[];error?:string}
@@ -16,7 +16,8 @@ export function summarizeBatch(items:readonly BatchItem[]){
  const count=(status:BatchStatus)=>items.filter(item=>item.status===status).length;
  return {total:items.length,succeeded:count('succeeded'),failed:count('failed'),cancelled:count('cancelled'),skipped:count('skipped'),pending:count('pending'),running:count('running')};
 }
-export async function runBatch(job:PdfJob,execute:JobExecutor,onUpdate:(items:BatchItem[],progress:number)=>void,signal:AbortSignal):Promise<BatchItem[]>{
+export async function runBatch(job:PdfJob,execute:JobExecutor,onUpdate:(items:BatchItem[],progress:number)=>void,signal:AbortSignal,perFileOptions?:readonly Partial<JobOptions>[]):Promise<BatchItem[]>{
+ if(perFileOptions&&perFileOptions.length!==job.inputs.length)throw new Error('Per-file settings do not match the selected files.');
  if(!supportsBatch(job.operation))throw new Error('This tool uses an individual arrangement or combined-file workflow. Choose a supported batch tool.');
  if(!job.inputs.length)throw new Error('Choose at least one PDF.');
  let items:BatchItem[]=job.inputs.map((input,index)=>({index,name:input.name,status:'pending',progress:0,files:[]}));
@@ -28,7 +29,7 @@ export async function runBatch(job:PdfJob,execute:JobExecutor,onUpdate:(items:Ba
   items[i]={...items[i],status:'running'};emit();
   try{
    if(!job.inputs[i].bytes.length)throw new Error('This file is empty. Choose a valid PDF.');
-   const files=await execute({operation:job.operation,inputs:[job.inputs[i]],options:{...job.options}},value=>{
+   const files=await execute({operation:job.operation,inputs:[job.inputs[i]],options:{...job.options,...perFileOptions?.[i]}},value=>{
     if(signal.aborted||items[i].status!=='running')return;
     const fraction=Number.isFinite(value)?Math.min(1,Math.max(items[i].progress,value)):items[i].progress;
     items[i]={...items[i],progress:fraction};emit();
@@ -45,4 +46,24 @@ export async function runBatch(job:PdfJob,execute:JobExecutor,onUpdate:(items:Ba
   emit();
  }
  return items;
+}
+/** Retry only failed, cancelled or unprocessed inputs, keeping successful outputs. */
+export async function retryBatch(job:PdfJob,previous:BatchItem[],execute:JobExecutor,onUpdate:(items:BatchItem[],progress:number)=>void,signal:AbortSignal,perFileOptions?:readonly Partial<JobOptions>[],selectedIndices?:readonly number[]):Promise<BatchItem[]>{
+ if(perFileOptions&&perFileOptions.length!==job.inputs.length)throw new Error('Per-file settings do not match the selected files.');
+ if(previous.length!==job.inputs.length||previous.some((item,i)=>item.index!==i||item.name!==job.inputs[i].name))throw new Error('The selected files changed. Run a new batch.');
+ if(selectedIndices&&(new Set(selectedIndices).size!==selectedIndices.length||selectedIndices.some(i=>!Number.isInteger(i)||i<0||i>=previous.length||!['failed','cancelled','skipped'].includes(previous[i].status))))throw new Error('Choose failed or unfinished files to retry.');
+ const indexes=previous.filter(item=>['failed','cancelled','skipped'].includes(item.status)&&(!selectedIndices||selectedIndices.includes(item.index))).map(item=>item.index);
+ if(!indexes.length)throw new Error('There are no failed or unfinished files to retry.');
+ let merged=previous.slice();
+ await runBatch({...job,inputs:indexes.map(i=>job.inputs[i])},execute,(items,progress)=>{
+  merged=previous.slice();for(const item of items){const index=indexes[item.index];const prefix=String(index+1).padStart(3,'0');merged[index]={...item,index,name:job.inputs[index].name,files:item.files.map(f=>({...f,name:f.name.replace(/^\d+-/,`${prefix}-`)}))};}
+  onUpdate(merged.slice(),progress);
+ },signal,perFileOptions&&indexes.map(i=>perFileOptions[i]));
+ return merged;
+}
+/** Explicit, local export of batch status. Does not include PDF bytes, options or passwords. */
+export function createBatchReport(items:readonly BatchItem[]):OutputFile{
+ if(!items.length)throw new Error('No batch results to report.');
+ const report={version:1,summary:summarizeBatch(items),items:items.map(item=>({name:item.name,status:item.status,...(item.error?{error:item.error}:{}),outputs:item.files.map(file=>({name:file.name,bytes:file.bytes.length,type:file.type}))}))};
+ return {name:'batch-report.json',type:'application/json',bytes:new TextEncoder().encode(JSON.stringify(report,null,2))};
 }

@@ -1,16 +1,26 @@
+import {addNavigation,editNavigation,reorderBookmarks} from './navigation';
+import {inspectForm,fillForm} from './forms';
+import {createTextPdf} from './text-pdf';
 import {zipSync} from 'fflate';
 import { runPdfJob, type PdfJob } from './index';
 import { CompressionSession, type EncodedCompressionImage } from './compression';
 import {validatePasswordDocument} from './password';
-import {OcrSession} from './ocr';
+import {OcrSession,rotateForOcr} from './ocr';
 let ocr:OcrSession|null=null;
 let session:CompressionSession|null=null;
 const progress=(value:number)=>self.postMessage({type:'progress',value});
 async function advance(){const next=session!.nextImage();if(next){self.postMessage({type:'compression-image',image:next},{transfer:[next.bytes.buffer as ArrayBuffer]});}else{const files=[await session!.finish()];session=null;self.postMessage({type:'done',files},{transfer:files.map(f=>f.bytes.buffer as ArrayBuffer)});}}
 self.onmessage=async(event:MessageEvent<any>)=>{
  try{
+  if(event.data.type==='bookmark-order'){const file=await reorderBookmarks(event.data.bytes,event.data.order);self.postMessage({type:'done',files:[file]},{transfer:[file.bytes.buffer as ArrayBuffer]});return;}
+  if(event.data.type==='navigation-edit'){const file=await editNavigation(event.data.bytes,event.data.renames,event.data.removeNames);self.postMessage({type:'done',files:[file]},{transfer:[file.bytes.buffer as ArrayBuffer]});return;}
+  if(event.data.type==='navigation-add'){const file=await addNavigation(event.data.bytes,event.data.bookmarks,event.data.attachments);self.postMessage({type:'done',files:[file]},{transfer:[file.bytes.buffer as ArrayBuffer]});return;}
+  if(event.data.type==='form-inspect'){const fields=await inspectForm(event.data.bytes);const bytes=new TextEncoder().encode(JSON.stringify(fields));self.postMessage({type:'done',files:[{name:'fields.json',type:'application/json',bytes}]},{transfer:[bytes.buffer]});return;}
+  if(event.data.type==='form-fill'){const file=await fillForm(event.data.bytes,event.data.fields,event.data.flatten);self.postMessage({type:'done',files:[file]},{transfer:[file.bytes.buffer as ArrayBuffer]});return;}
+  if(event.data.type==='text-pdf'){const file=await createTextPdf(event.data.options,progress);self.postMessage({type:'done',files:[file]},{transfer:[file.bytes.buffer as ArrayBuffer]});return;}
   if(event.data.type==='batch-zip'){const files=event.data.files as import('./index').OutputFile[];const names=new Set<string>();for(const f of files){if(!f.name||/[\\/\x00-\x1f]/.test(f.name)||names.has(f.name))throw new Error('Invalid or duplicate archive filename.');names.add(f.name);}const bytes=zipSync(Object.fromEntries(files.map(f=>[f.name,f.bytes])),{level:0});self.postMessage({type:'done',files:[{name:'local-pdf-tools-batch.zip',type:'application/zip',bytes}]},{transfer:[bytes.buffer as ArrayBuffer]});return;}
   if(event.data.type==='password-validate'){await validatePasswordDocument(event.data.bytes,event.data.operation);self.postMessage({type:'validated'});return;}
+  if(event.data.type==='ocr-rotate'){const file=await rotateForOcr(event.data.bytes,event.data.range,event.data.rotation,progress);self.postMessage({type:'done',files:[file]},{transfer:[file.bytes.buffer as ArrayBuffer]});return;}
   if(event.data.type==='ocr-init'){ocr=await OcrSession.create(event.data.bytes);self.postMessage({type:'ocr-ready'});return;}
   if(event.data.type==='ocr-layer'){if(!ocr)throw new Error('No OCR session.');await ocr.add(event.data.page,event.data.bytes);self.postMessage({type:'ocr-ready'});return;}
   if(event.data.type==='ocr-finish'){if(!ocr)throw new Error('No OCR session.');const bytes=await ocr.finish();ocr=null;self.postMessage({type:'ocr-output',bytes},{transfer:[bytes.buffer as ArrayBuffer]});return;}

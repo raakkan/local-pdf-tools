@@ -1,7 +1,7 @@
 import { PDFArray, PDFDict, PDFName, PDFNull, PDFStream, type PDFDocument, type PDFObject } from 'pdf-lib';
 import type { Operation } from './index';
 export const inPlaceOperations: readonly Operation[] = ['protect-pdf','unlock-pdf','ocr','compress','metadata','crop-pdf','header-footer','page-numbers','watermark','signature'];
-export const rebuildingOperations: readonly Operation[] = ['merge','split','organize','alternate-merge','resize-pdf','n-up'];
+export const rebuildingOperations: readonly Operation[] = ['merge','split','organize','alternate-merge','resize-pdf','n-up','booklet'];
 export interface DocumentCompatibility { features:string[]; supportedEdits:Operation[]; restrictedEdits:Operation[]; blockingReason:string|null }
 function hasSignature(doc:PDFDocument):boolean {
   const stack:PDFObject[]=[doc.catalog,...doc.context.enumerateIndirectObjects().map(([,value])=>value)],seen=new Set<PDFObject>();

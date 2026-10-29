@@ -1,3 +1,5 @@
+> Update: Booklet layout now supports batch mode, and failed or unfinished files can be retried without rerunning successful files. Passwords must be re-entered before retry. Streaming and per-file settings remain future work.
+
 # Step 5 — batch processing (0.7.0)
 
 Batch mode applies one tool and shared settings independently to several PDFs. The original 20-tool registry is unchanged; 15 tools offer a “Process multiple PDFs separately” checkbox. Merge, alternate merge and images-to-PDF retain their combined-file workflows. Organization and metadata editing remain individual workflows.

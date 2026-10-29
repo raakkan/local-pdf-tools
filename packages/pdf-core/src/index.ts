@@ -7,10 +7,10 @@ export type { DocumentCompatibility } from './compatibility';
 import { extensionOperations, inspectDocument, visibleGeometry, runExtendedPdfJob } from './extensions';
 export type { InspectionReport } from './extensions';
 import { zipSync } from 'fflate';
-export type Operation = 'protect-pdf' | 'unlock-pdf' | 'ocr' | 'merge' | 'split' | 'organize' | 'images-to-pdf' | 'pdf-to-images' | 'extract-text' | 'page-numbers' | 'watermark' | 'signature' | 'inspect-pdf' | 'metadata' | 'alternate-merge' | 'resize-pdf' | 'crop-pdf' | 'header-footer' | 'n-up' | 'compress';
+export type Operation = 'protect-pdf' | 'unlock-pdf' | 'ocr' | 'merge' | 'split' | 'organize' | 'images-to-pdf' | 'pdf-to-images' | 'extract-text' | 'page-numbers' | 'watermark' | 'signature' | 'inspect-pdf' | 'metadata' | 'alternate-merge' | 'resize-pdf' | 'crop-pdf' | 'header-footer' | 'n-up' | 'compress' | 'booklet';
 export interface InputFile { name: string; bytes: Uint8Array; type: string }
 export interface PageRef { file: number; page: number; rotation: number; blank?: boolean }
-export interface JobOptions { password?:string; ocrLanguage?:string; ocrDpi?:number; ocrOutput?:'both'|'pdf'|'text'; ocrExisting?:boolean; compressionMode?:'lossless'|'images'; imageQuality?:number; maxImageDimension?:number; metadata?: {title?:string;author?:string;subject?:string;keywords?:string}; removeMetadata?:boolean; reverseBack?:boolean; cropTop?:number; cropRight?:number; cropBottom?:number; cropLeft?:number; headerText?:string; footerText?:string; alignment?:'left'|'center'|'right'; fontSize?:number; pagesPerSheet?:2|4; gap?:number; range?: string; separate?: boolean; pages?: PageRef[]; pageSize?: 'a4' | 'letter' | 'fit'; landscape?: boolean; margin?: number; text?: string; position?: 'bottom-center' | 'top-center' | 'bottom-right'; start?: number; opacity?: number; rotation?: number; imageFormat?: 'png' | 'jpeg'; scale?: number; signature?: Uint8Array; signatureX?: number; signatureY?: number; signatureWidth?: number }
+export interface JobOptions { ocrRotation?:0|90|180|270; ocrReport?:boolean; imageOrientation?:'portrait'|'landscape'|'auto'; imageExportQuality?:number; imageGrayscale?:boolean; binding?:'left'|'right'; password?:string; ocrLanguage?:string; ocrDpi?:number; ocrOutput?:'both'|'pdf'|'text'; ocrExisting?:boolean; compressionMode?:'lossless'|'images'; imageQuality?:number; maxImageDimension?:number; metadata?: {title?:string;author?:string;subject?:string;keywords?:string}; removeMetadata?:boolean; reverseBack?:boolean; cropTop?:number; cropRight?:number; cropBottom?:number; cropLeft?:number; headerText?:string; footerText?:string; alignment?:'left'|'center'|'right'; fontSize?:number; pagesPerSheet?:2|4; gap?:number; range?: string; separate?: boolean; pages?: PageRef[]; pageSize?: 'a4' | 'letter' | 'fit'; landscape?: boolean; margin?: number; text?: string; position?: 'bottom-center' | 'top-center' | 'bottom-right'; start?: number; opacity?: number; rotation?: number; imageFormat?: 'png' | 'jpeg' | 'webp'; scale?: number; signature?: Uint8Array; signatureX?: number; signatureY?: number; signatureWidth?: number }
 export interface PdfJob { operation: Operation; inputs: InputFile[]; options: JobOptions }
 export interface OutputFile { ocr?:{recognized:number;skipped:number;lowConfidence:number[]}; compression?: import('./compression').CompressionSummary; name: string; bytes: Uint8Array; type: string }
 export type Progress = (fraction: number) => void;
@@ -33,6 +33,7 @@ export const tools: {id: Operation; name: string; description: string; category:
   {id:'resize-pdf',name:'Resize pages',description:'A consistent fit for every page.',category:'Organize'},
   {id:'crop-pdf',name:'Crop pages',description:'Bring the important parts into view.',category:'Organize'},
   {id:'header-footer',name:'Headers & footers',description:'Add context from top to bottom.',category:'Personalize'},
+  {id:'booklet',name:'Booklet layout',description:'Arrange pages for folded booklets.',category:'Organize'},
   {id:'n-up',name:'Pages per sheet',description:'A little less paper. Just as useful.',category:'Organize'},
   {id:'signature',name:'Visual signature',description:'Place your handwritten signature.',category:'Personalize'},
 ];
@@ -76,13 +77,14 @@ export async function runPdfJob(job: PdfJob, progress: Progress = ()=>{}): Promi
   out.setProducer('Local PDF Tools'); out.setCreator('Local PDF Tools');
   const output = async (doc: PDFDocument, name: string): Promise<OutputFile> => ({name, bytes:await doc.save({updateFieldAppearances:false}), type:'application/pdf'});
   if (operation === 'images-to-pdf') {
-    const margin = number(o.margin,24,0,100);
+    const margin = number(o.margin,24,0,100),orientation=o.imageOrientation??(o.landscape?'landscape':'portrait');
+    if(!['portrait','landscape','auto'].includes(orientation))throw new Error('Choose a valid image page orientation.');
     for (let i=0;i<inputs.length;i++) {
       const input=inputs[i];
       const img = input.type==='image/png' ? await out.embedPng(input.bytes) : input.type==='image/jpeg' ? await out.embedJpg(input.bytes) : null;
       if (!img) throw new Error('Choose JPEG or PNG images.');
       let size: [number,number] = o.pageSize==='fit' ? [img.width+margin*2,img.height+margin*2] : o.pageSize==='letter' ? [612,792] : [595.28,841.89];
-      if (o.landscape && size[0]<size[1]) size=[size[1],size[0]];
+      if (o.pageSize!=='fit'&&(orientation==='landscape'||orientation==='auto'&&img.width>img.height)&&size[0]<size[1]) size=[size[1],size[0]];
       const page=out.addPage(size), scale=Math.min((size[0]-margin*2)/img.width,(size[1]-margin*2)/img.height);
       page.drawImage(img,{x:(size[0]-img.width*scale)/2,y:(size[1]-img.height*scale)/2,width:img.width*scale,height:img.height*scale});
       progress((i+1)/inputs.length);

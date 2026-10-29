@@ -1,3 +1,11 @@
+## Local Chrome regression — 29 October 2026
+
+Current working tree: strict TypeScript checks and 179 core tests passed; 36 browser tests passed in locally installed Google Chrome on macOS (Apple Silicon). Tests cover all 21 registered tools and the workflows, forms, comparison, text-to-PDF, and bookmark workspaces; they include synthetic output checks, English OCR text, password roundtrip, per-file batch retry, and cached offline processing for merge, images, workflows, booklet and text-to-PDF. A separate Chrome UI test reopened an edited bookmark/attachment PDF. The tests are representative, not exhaustive evidence for every PDF or every supported platform.
+
+The desktop qualification, full offline coverage across tools/platforms, other browsers and mobile devices, performance limits, accessibility review, installer signing/notarization and independent visual/document-corpus review remain outstanding. Do not present the current results as full release qualification. The working tree is not deployed.
+
+> Deployment update: the production Pages project and both custom domains are active. The checklist below records historical qualification work; see current CI for latest automated results.
+
 # Verification status
 
 This is a development implementation, not a qualified production release.
@@ -49,3 +57,7 @@ macOS 27.0.1 arm64 Tauri/WKWebView: native open/protect/save and encrypted open/
 TypeScript and 142 core tests pass, including 14 batch scheduling/error/cancellation/naming cases. The production browser harness passed all 68 checks with the restrictive CSP, then all 68 passed again after the HTTP server was stopped and the cached harness reloaded. Actual batch adapters covered compression/canvas encoding, split, page images, text, OCR, password protection/unlocking, cancellation/partial results and worker ZIP export. A 390-pixel browser viewport showed no horizontal overflow in the populated batch-results UI.
 
 macOS arm64 Tauri/WKWebView: a native multiple-file picker loaded three synthetic PDFs. Batch extraction reported one success, one invalid-page-range failure and one malformed-input failure. Saving successful outputs as ZIP used the native save dialog. Independent Python zipfile/pypdf verification found exactly the successful one-page PDF containing page 2; the original source remained three pages. Windows/Linux and large-batch qualification, signing/notarization and deployment remain pending.
+
+## Reusable workflows
+
+Ordered workflows support merge, extraction, resize, crop, page numbers, watermark, headers/footers, metadata, pages-per-sheet and compression. Presets store explicit settings locally; files stay in session memory. Core tests cover real output, preservation of inputs, cancellation, input/output validation and preset sanitization. Browser and desktop cross-platform qualification remains open.

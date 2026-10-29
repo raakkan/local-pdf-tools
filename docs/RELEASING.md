@@ -2,11 +2,9 @@
 
 ## Static website
 
-1. Create a public GitHub repository and push this source. Configure the repository's security advisory channel and set `VITE_REPOSITORY_URL` to its actual URL.
-2. Create a Cloudflare Pages project named `local-pdf-tools`. For Git integration: build command `pnpm build`, output `apps/web/dist`, Node 22.12+.
-3. Alternatively run the manual Pages workflow after setting `CLOUDFLARE_API_TOKEN` (Pages edit on the target account) and `CLOUDFLARE_ACCOUNT_ID` secrets. Set repository variable `REPOSITORY_URL` and optional `SPONSOR_URL`.
-4. Inspect the deployment URL, CSP, direct tool routes, and offline flow before adding `localpdftools.com` through Cloudflare's custom-domain setup. Follow the DNS records Cloudflare provides. The code does not change DNS.
-5. For rollback, redeploy the prior known-good commit. Offline cache versions derive from build bytes; service workers retain a complete cache and replace old application caches upon activation. An already-open session may need a reload after an update; reload only after saving its work.
+The production Cloudflare Pages project is `local-pdf-tools-web`, connected to `raakkan/local-pdf-tools`. Pushes to `main` trigger builds with `pnpm build`, output `apps/web/dist`, Node 22, and pnpm 10.28.2. The active custom domains are `localpdftools.com` and `www.localpdftools.com`.
+
+Inspect the deployment, CSP, tool routes, and offline flow after changes. For rollback, redeploy a prior known-good commit through Cloudflare. The older `local-pdf-tools` project is separate and is not the production domain target. The optional manually triggered GitHub workflow targets `local-pdf-tools-web` and requires separately configured Cloudflare credentials; normal deployments use the Git connection.
 
 ## Desktop qualification and artifacts
 

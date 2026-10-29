@@ -1,3 +1,5 @@
+> Historical handoff: the GitHub repository and Cloudflare production site are now configured. Desktop qualification remains open.
+
 Version 0.7.0 adds shared-settings batch processing. See [BATCH_STATUS.md](BATCH_STATUS.md).
 
 Version 0.6.0 adds password protection and unlocking. See [PASSWORD_STATUS.md](PASSWORD_STATUS.md).

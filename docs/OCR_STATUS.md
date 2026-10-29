@@ -1,3 +1,5 @@
+> Update: OCR supports an explicit 90°, 180°, or 270° clockwise rotation for selected pages before recognition. Searchable PDF copies include the rotation; text-only runs use a temporary rotated copy. Signed, certified and XFA PDFs cannot be rotated. An optional JSON report records page status and estimated confidence, without recognized text. This is manual rotation, not automatic orientation detection.
+
 # Step 3 — OCR (0.5.0)
 
 OCR PDF runs Tesseract.js 7 locally in a dedicated worker. The selected pages are rendered by bundled PDF.js at 150, 200, or 300 DPI with a 16 million pixel limit per page. A second worker adds text-only PDF layers over the original page artwork. Source bytes are never overwritten; source crop, rotation, forms, links, attachments and bookmarks are retained. Signed, certified and XFA documents cannot be rewritten. Text-only recognition does not rewrite them.

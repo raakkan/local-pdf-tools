@@ -12,3 +12,6 @@ export async function prepareOcr(language:string,signal:AbortSignal,progress:(n:
  }
 }
 export async function isOcrReady(language:string){try{const m=await manifest(),cache=await caches.open(`localpdf-ocr-${m.version}`);return (await Promise.all([...m.assets,m.languages[language]].map(a=>cache.match(new URL(a.path,new URL(import.meta.env.BASE_URL,location.href)).href)))).every(Boolean);}catch{return false;}}
+
+/** Remove only the selected language pack; retain the shared engine and other languages. */
+export async function removeOcrLanguage(language:string){if(!(language in ocrLanguages))throw new Error('Choose a supported OCR language.');const m=await manifest(),cache=await caches.open(`localpdf-ocr-${m.version}`);await cache.delete(new URL(m.languages[language].path,new URL(import.meta.env.BASE_URL,location.href)).href);}

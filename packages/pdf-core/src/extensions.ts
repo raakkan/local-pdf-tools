@@ -2,7 +2,7 @@ import { PDFDocument, PDFName, PDFRef, PDFNumber, StandardFonts, degrees, rgb, p
 import { deleteIfUnreferenced } from './compatibility';
 import type { DocumentCompatibility } from './compatibility';
 import type { JobOptions, Operation, OutputFile, Progress } from './index';
-export const extensionOperations = ['metadata','alternate-merge','resize-pdf','crop-pdf','header-footer','n-up'] as const;
+export const extensionOperations = ['metadata','alternate-merge','resize-pdf','crop-pdf','header-footer','n-up','booklet'] as const;
 export interface InspectionReport {
   pageCount: number;
   metadata: { title:string; author:string; subject:string; keywords:string; creator:string; producer:string; created:string; modified:string; hasXmp:boolean };
@@ -66,6 +66,16 @@ export async function runExtendedPdfJob(operation:Operation,docs:PDFDocument[],o
       page.setCropBox(box.x+box.width*l,box.y+box.height*b,box.width*(1-l-r),box.height*(1-b-t));progress((i+1)/selected.length);
     }
     return [{name:'cropped.pdf',bytes:await doc.save({updateFieldAppearances:false}),type:'application/pdf'}];
+  } else if(operation==='booklet') {
+    if(options.binding!==undefined&&options.binding!=='left'&&options.binding!=='right')throw new Error('Choose left or right binding.');
+    const size=paper({...options,landscape:true}),margin=finite(options.margin,24,0,100),gap=finite(options.gap,12,0,72),w=(size[0]-2*margin-gap)/2,h=size[1]-2*margin;
+    if(w<=0||h<=0)throw new Error('Choose smaller margins or spacing.');
+    const padded=Math.ceil(selected.length/4)*4,slots=Array.from({length:padded},(_,i)=>i<selected.length?selected[i]:null);
+    for(let sheet=0;sheet<padded/4;sheet++){
+      const front=[slots[padded-1-2*sheet],slots[2*sheet]],back=[slots[2*sheet+1],slots[padded-2-2*sheet]];
+      for(const pair of [front,back]){if(options.binding==='right')pair.reverse();const target=out.addPage(size);for(let col=0;col<2;col++)if(pair[col]!==null)await placePage(target,doc.getPage(pair[col]!),margin+col*(w+gap),margin,w,h);}
+      progress((sheet+1)/(padded/4));
+    }
   } else if(operation==='resize-pdf'||operation==='n-up') {
     const size=paper(options),margin=finite(options.margin,24,0,100),gap=finite(options.gap,12,0,72);
     if(operation==='resize-pdf'){

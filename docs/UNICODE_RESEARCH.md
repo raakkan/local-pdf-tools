@@ -1,0 +1,7 @@
+# Unicode text-to-PDF investigation
+
+The current text-to-PDF implementation uses the PDF standard Helvetica font and rejects unsupported characters. An experimental implementation using Noto Sans, Noto Sans Tamil, Noto Sans Devanagari and `@pdf-lib/fontkit` was tested against PDF.js text extraction. It could render output but did not preserve the original Unicode text: `தமிழ் வணக்கம் नमस्ते Café` extracted as `தமி^ வணMகXनम႘ते Café`. Complex-script shaping maps multiple Unicode characters to glyphs, and the existing embedding path did not preserve a reliable mapping. The experiment was removed to avoid publishing broken selectable text.
+
+A replacement needs reliable shaping and Unicode extraction, tested independently with Tamil and Devanagari fixtures, mixed scripts, wrapping, multiple viewers and offline browser/desktop operation. Evaluate engines with explicit support for shaped text and correct Unicode mapping, including `/ActualText` if supported by target readers. Include licensed fonts and notices only after these checks pass.
+
+A second isolated evaluation of MIT-licensed HappyPDF with HarfBuzz and Noto Sans Tamil/Devanagari produced shaped output, but PDF.js extracted `தமிழ் வணக்கம்` as `தமிமிழ் வணக் கம்` and `नमस्ते दुनिया` as `निमस्तेते दु निनियाया`. This engine was not added to the application. Rendering alone is not sufficient for searchable text. See https://github.com/seanghay/happypdf for the engine and https://harfbuzz.github.io/ for shaping background.

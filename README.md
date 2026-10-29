@@ -1,3 +1,5 @@
+![Local PDF Tools: Your PDFs. Your device.](docs/images/readme-cover.png)
+
 # Local PDF Tools
 
 **Your PDFs. Your device. Your business.**
@@ -120,7 +122,7 @@ The implementation is independent; PDFCraft's feature catalog informed the roadm
 
 Inspect PDF now lists detected document features and the available/restricted edit operations. Empty unsigned signature fields can be retained, but actual signature dictionaries and certification permissions block rewriting. This does not add form filling, flattening, or certificate signing. New stamps are not tagged for accessibility, and preserving existing tags is not a conformance certification. Crop may hide existing form controls visually without removing them.
 
-See [compatibility verification](docs/COMPATIBILITY_STATUS.md). Compression is implemented in version 0.4.0. OCR is implemented in version 0.5.0. Password protection and unlocking are implemented in 0.6.0. Batch processing is implemented in 0.7.0; reusable presets remain planned.
+See [compatibility verification](docs/COMPATIBILITY_STATUS.md). Compression is implemented in version 0.4.0. OCR is implemented in version 0.5.0. Password protection and unlocking are implemented in 0.6.0. Batch processing is implemented in 0.7.0; reusable workflows and locally saved presets are available.
 
 ## Step 2: compression (0.4.0)
 

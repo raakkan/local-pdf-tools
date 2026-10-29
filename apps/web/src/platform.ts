@@ -5,13 +5,13 @@ export const platform = {
   async open(accept: string, multiple: boolean): Promise<InputFile[]> {
     if (desktop) {
       const {open}=await import('@tauri-apps/plugin-dialog'), {readFile}=await import('@tauri-apps/plugin-fs');
-      const chosen=await open({multiple,filters:[accept.includes('image')?{name:'Images',extensions:['png','jpg','jpeg']}:{name:'PDF',extensions:['pdf']}]});
+      const chosen=await open({multiple,filters:accept==='*/*'?undefined:[accept.includes('image')?{name:'Images',extensions:accept.includes('image/webp')?['png','jpg','jpeg','webp']:['png','jpg','jpeg']}:accept.includes('application/json')?{name:'JSON',extensions:['json']}:accept.includes('text/plain')?{name:'Text',extensions:['txt']}:{name:'PDF',extensions:['pdf']}]});
       if (!chosen) return [];
-      return Promise.all((Array.isArray(chosen)?chosen:[chosen]).map(async path=>({name:path.split(/[\\/]/).pop()!,bytes:await readFile(path),type:/\.png$/i.test(path)?'image/png':/\.jpe?g$/i.test(path)?'image/jpeg':'application/pdf'})));
+      return Promise.all((Array.isArray(chosen)?chosen:[chosen]).map(async path=>({name:path.split(/[\\/]/).pop()!,bytes:await readFile(path),type:/\.png$/i.test(path)?'image/png':/\.jpe?g$/i.test(path)?'image/jpeg':/\.webp$/i.test(path)?'image/webp':'application/pdf'})));
     }
     return new Promise(resolve=>{
       const input=document.createElement('input'); input.type='file'; input.accept=accept; input.multiple=multiple;
-      input.onchange=async()=>{try{resolve(await Promise.all(Array.from(input.files??[]).map(async f=>({name:f.name,bytes:new Uint8Array(await f.arrayBuffer()),type:f.type || (/\.pdf$/i.test(f.name)?'application/pdf':'')}))));}finally{input.remove();}};
+      input.onchange=async()=>{try{resolve(await Promise.all(Array.from(input.files??[]).map(async f=>({name:f.name,bytes:new Uint8Array(await f.arrayBuffer()),type:f.type || (/\.pdf$/i.test(f.name)?'application/pdf':/\.webp$/i.test(f.name)?'image/webp':'')}))));}finally{input.remove();}};
       input.oncancel=()=>{input.remove();resolve([]);}; input.style.display='none';document.body.append(input);input.click();
     });
   },

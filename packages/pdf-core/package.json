@@ -5,16 +5,16 @@
   "license": "MIT",
   "exports": "./src/index.ts",
   "dependencies": {
+    "@ai-ecoverse/wasm-qpdf": "12.4.2-10",
+    "@tesseract.js-data/deu": "1.0.0",
+    "@tesseract.js-data/eng": "1.0.0",
+    "@tesseract.js-data/fra": "1.0.0",
+    "@tesseract.js-data/hin": "1.0.0",
+    "@tesseract.js-data/spa": "1.0.0",
+    "@tesseract.js-data/tam": "1.0.0",
+    "fflate": "^0.8.2",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "^5.4.530",
-    "fflate": "^0.8.2",
-    "tesseract.js": "7.0.0",
-    "@tesseract.js-data/eng": "1.0.0",
-    "@tesseract.js-data/spa": "1.0.0",
-    "@tesseract.js-data/fra": "1.0.0",
-    "@tesseract.js-data/deu": "1.0.0",
-    "@tesseract.js-data/hin": "1.0.0",
-    "@tesseract.js-data/tam": "1.0.0",
-    "@ai-ecoverse/wasm-qpdf": "12.4.2-10"
+    "tesseract.js": "7.0.0"
   }
 }
